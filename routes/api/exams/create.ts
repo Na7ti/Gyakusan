@@ -2,39 +2,33 @@ import { Handlers } from "$fresh/server.ts";
 import { withDb } from "$/db/client.ts";
 import { generateSchedule } from "$/utils/calculator.ts";
 import { getCookies } from "https://deno.land/std@0.216.0/http/cookie.ts";
+import { GoogleCalendarClient } from "$/utils/google_calendar.ts";
 
 export const handler: Handlers = {
   async POST(req) {
     const cookies = getCookies(req.headers);
-    // TODO: Validate auth cookie in middleware, but here just assume it exists or use mock user
-    // For now, hardcode user_id or fetch from session (mocked)
-    // In real app, we get user_id from session info.
-    // Let's assume user_id = 1 for now if mock auth is active, or we need to insert a user first?
-    
-    // We haven't inserted a user yet.
-    // Let's ensure a user exists or handle this in db/client helper.
-    // For MVP/Mock, let's just insert with user_id=null (if nullable?) -> My schema has user_id REFERENCES users(id).
-    // So I MUST have a user.
-    
-    // Let's first ensure we have a user.
+    const authToken = cookies.auth_token;
+
+    if (!authToken) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
     const userId = await withDb(async (client) => {
-        // Check if mock user exists, if not create
-        const result = await client.queryObject`SELECT id FROM users WHERE google_id='mock_user_id'`;
-        if (result.rows.length > 0) {
-            return (result.rows[0] as any).id;
-        } else {
-            const insert = await client.queryObject`
-                INSERT INTO users (google_id, email, access_token) 
-                VALUES ('mock_user_id', 'mock@example.com', 'mock_token') 
-                RETURNING id`;
-            return (insert.rows[0] as any).id;
-        }
+        const result = await client.queryObject`SELECT id FROM users WHERE google_id=${authToken}`;
+        if (result.rows.length === 0) throw new Error("User not found");
+        return (result.rows[0] as any).id;
     });
+
+    const calendar = new GoogleCalendarClient(authToken);
 
     const form = await req.formData();
     const title = form.get("title") as string;
     const examDateStr = form.get("exam_date") as string;
     const targetPagesStr = form.get("target_pages") as string;
+    
+    const regStartStr = form.get("registration_start_date") as string;
+    const regEndStr = form.get("registration_end_date") as string;
+    const paymentDeadlineStr = form.get("payment_deadline") as string;
 
     if (!title || !examDateStr || !targetPagesStr) {
       return new Response("Missing fields", { status: 400 });
@@ -42,7 +36,8 @@ export const handler: Handlers = {
 
     const examDate = new Date(examDateStr);
     const targetPages = parseInt(targetPagesStr);
-    const startDate = new Date(); // Start from today
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
 
     const schedule = generateSchedule(startDate, examDate, targetPages);
 
@@ -50,23 +45,56 @@ export const handler: Handlers = {
       try {
         await client.queryArray("BEGIN");
 
-        // Insert Exam
         const examResult = await client.queryObject`
-          INSERT INTO exams (user_id, title, exam_date, target_pages)
-          VALUES (${userId}, ${title}, ${examDate}, ${targetPages})
+          INSERT INTO exams (
+            user_id, title, exam_date, target_pages, 
+            registration_start_date, registration_end_date, payment_deadline
+          )
+          VALUES (
+            ${userId}, ${title}, ${examDate}, ${targetPages},
+            ${regStartStr || null}, ${regEndStr || null}, ${paymentDeadlineStr || null}
+          )
           RETURNING id
         `;
         const examId = (examResult.rows[0] as any).id;
 
-        // Insert Tasks
-        // Deno Postgres doesn't support bulk insert nicely with tagged templates in older versions,
-        // but we can loop or construct a string. Since schedule is limited (~365 days), looping is "okay" for MVP but slow.
-        // Let's do a loop for simplicity now.
+        const allTasks = [];
+
+        // Add Important Dates
+        if (regStartStr) allTasks.push({ title: '📝 出願開始日', date: regStartStr, desc: '試験の出願受付が開始されます。' });
+        if (regEndStr) allTasks.push({ title: '⚠️ 出願締切日', date: regEndStr, desc: '試験の出願締切日です。お忘れなく！' });
+        if (paymentDeadlineStr) allTasks.push({ title: '💳 支払期限', date: paymentDeadlineStr, desc: '受験料の支払い期限です。' });
+        allTasks.push({ title: '🎉 試験当日', date: examDateStr, desc: `頑張りましょう！ (${title})` });
+
+        // Add Study Tasks
         for (const task of schedule) {
-            await client.queryArray`
-                INSERT INTO tasks (exam_id, title, due_date, description)
-                VALUES (${examId}, ${`Task for ${task.date.toISOString().split('T')[0]}`}, ${task.date}, ${`Target: ${task.target} pages (Total: ${task.cumulative})`})
-            `;
+          allTasks.push({
+            title: `Task: ${task.target} items`,
+            date: task.date.toISOString().split('T')[0],
+            desc: `Target quota for today. Cumulative total: ${task.cumulative}`
+          });
+        }
+
+        for (const task of allTasks) {
+          // 1. Sync to Google Calendar
+          let calendarEventId = null;
+          try {
+            const event = await calendar.createEvent({
+              summary: `${task.title} [Gyakusan]`,
+              description: task.desc,
+              start: { date: task.date },
+              end: { date: task.date }, // All day event
+            });
+            calendarEventId = event.id;
+          } catch (err) {
+            console.error("Failed to sync task to calendar", err);
+          }
+
+          // 2. Save to DB
+          await client.queryArray`
+            INSERT INTO tasks (exam_id, title, due_date, description, calendar_event_id)
+            VALUES (${examId}, ${task.title}, ${task.date}, ${task.desc}, ${calendarEventId})
+          `;
         }
 
         await client.queryArray("COMMIT");
@@ -76,12 +104,9 @@ export const handler: Handlers = {
       }
     });
 
-    // Redirect to dashboard
-    const headers = new Headers();
-    headers.set("location", "/");
     return new Response(null, {
       status: 303,
-      headers,
+      headers: { "location": "/" },
     });
   },
 };

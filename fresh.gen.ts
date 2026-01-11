@@ -3,6 +3,8 @@
 // This file is automatically updated during development when running `dev.ts`.
 
 import * as $_middleware from "./routes/_middleware.ts";
+import * as $api_auth_callback from "./routes/api/auth/callback.ts";
+import * as $api_auth_google from "./routes/api/auth/google.ts";
 import * as $api_auth_mock from "./routes/api/auth/mock.ts";
 import * as $api_exams_create from "./routes/api/exams/create.ts";
 import * as $api_tasks_id_toggle from "./routes/api/tasks/[id]/toggle.ts";
@@ -15,6 +17,8 @@ import type { Manifest } from "$fresh/server.ts";
 const manifest = {
   routes: {
     "./routes/_middleware.ts": $_middleware,
+    "./routes/api/auth/callback.ts": $api_auth_callback,
+    "./routes/api/auth/google.ts": $api_auth_google,
     "./routes/api/auth/mock.ts": $api_auth_mock,
     "./routes/api/exams/create.ts": $api_exams_create,
     "./routes/api/tasks/[id]/toggle.ts": $api_tasks_id_toggle,

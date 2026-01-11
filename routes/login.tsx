@@ -1,25 +1,43 @@
 import { Head } from "$fresh/runtime.ts";
 
-export default function Login() {
+export default function LoginPage() {
   return (
     <>
       <Head>
         <title>Login - Gyakusan</title>
       </Head>
-      <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <div class="p-8 bg-white rounded-lg shadow-md w-96">
-          <h1 class="mb-6 text-2xl font-bold text-center text-gray-800">Login</h1>
-          <p class="mb-6 text-sm text-center text-gray-600">
-            Development Mode (Mock Auth)
-          </p>
-          <form method="POST" action="/api/auth/mock">
-            <button
-              type="submit"
-              class="w-full px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      <div class="min-h-screen flex items-center justify-center bg-gray-50">
+        <div class="max-w-md w-full space-y-8 p-10 bg-white rounded-2xl shadow-xl border border-gray-100">
+          <div class="text-center">
+            <h1 class="text-4xl font-black text-primary tracking-tighter mb-2">GYAKUSAN</h1>
+            <p class="text-gray-500 font-medium">合格への最短ルートを逆算する</p>
+          </div>
+          
+          <div class="py-10">
+            <a
+              href="/api/auth/google"
+              class="flex items-center justify-center gap-3 w-full bg-white border border-gray-300 rounded-full px-6 py-3 text-gray-700 font-bold hover:bg-gray-50 transition-all shadow-sm"
             >
-              Login as Mock User
-            </button>
-          </form>
+              <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-6 h-6" alt="Google" />
+              Googleでログイン
+            </a>
+            
+            <div class="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
+              <span class="w-8 h-[1px] bg-gray-200"></span>
+              <span>OR (Development Only)</span>
+              <span class="w-8 h-[1px] bg-gray-200"></span>
+            </div>
+
+            <form action="/api/auth/mock" method="POST" class="mt-4">
+              <button class="w-full btn btn-ghost btn-sm text-gray-400 hover:text-primary transition-colors">
+                Skip to Mock Login
+              </button>
+            </form>
+          </div>
+
+          <div class="text-center text-sm text-gray-400">
+            ログインすることで利用規約に同意したことになります
+          </div>
         </div>
       </div>
     </>

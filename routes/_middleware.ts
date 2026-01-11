@@ -1,14 +1,13 @@
 import { FreshContext } from "$fresh/server.ts";
 import { getCookies } from "https://deno.land/std@0.216.0/http/cookie.ts";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
+import { withDb } from "$/db/client.ts";
 
 export interface State {
-  user?: User;
+  user?: {
+    id: string;
+    email: string;
+    name?: string;
+  };
 }
 
 export async function handler(
@@ -17,31 +16,37 @@ export async function handler(
 ) {
   const url = new URL(req.url);
   
-  // Skip auth check for login page and static assets
-  if (url.pathname === "/login" || url.pathname.startsWith("/api/auth") || url.pathname.startsWith("/static")) {
+  // Skip auth check for login page, auth APIs, and static assets
+  if (
+    url.pathname === "/login" || 
+    url.pathname.startsWith("/api/auth") || 
+    url.pathname.startsWith("/static") ||
+    url.pathname.startsWith("/_frsh")
+  ) {
     return await ctx.next();
   }
 
   const cookies = getCookies(req.headers);
   const authToken = cookies.auth_token;
 
-  if (authToken === "mock_token_123") {
-    ctx.state.user = {
-      id: "mock_user_id",
-      name: "Mock User",
-      email: "mock@example.com",
-    };
-  } else {
-    // Redirect to login if not authenticated
-    // For now, simple redirect. 
-    // In production, might want to check if it's an API call or page load.
-    if (!url.pathname.startsWith("/_fresh")) {
-        return new Response(null, {
-            status: 303,
-            headers: { location: "/login" },
-        });
+  if (authToken) {
+    // Fetch real user from DB
+    const user = await withDb(async (client) => {
+      const res = await client.queryObject`
+        SELECT google_id as id, email FROM users WHERE google_id = ${authToken}
+      `;
+      return res.rows[0] as State["user"];
+    });
+
+    if (user) {
+      ctx.state.user = user;
+      return await ctx.next();
     }
   }
 
-  return await ctx.next();
+  // Redirect to login if not authenticated
+  return new Response(null, {
+    status: 303,
+    headers: { location: "/login" },
+  });
 }
