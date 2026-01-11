@@ -1,6 +1,6 @@
 import { Handlers } from "$fresh/server.ts";
-import { withDb } from "../../../db/client.ts";
-import { generateSchedule } from "../../../utils/calculator.ts";
+import { withDb } from "$/db/client.ts";
+import { generateSchedule } from "$/utils/calculator.ts";
 import { getCookies } from "https://deno.land/std@0.216.0/http/cookie.ts";
 
 export const handler: Handlers = {

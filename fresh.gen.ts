@@ -5,10 +5,11 @@
 import * as $_middleware from "./routes/_middleware.ts";
 import * as $api_auth_mock from "./routes/api/auth/mock.ts";
 import * as $api_exams_create from "./routes/api/exams/create.ts";
+import * as $api_tasks_id_toggle from "./routes/api/tasks/[id]/toggle.ts";
 import * as $exams_new from "./routes/exams/new.tsx";
 import * as $index from "./routes/index.tsx";
 import * as $login from "./routes/login.tsx";
-
+import * as $TaskCheckbox from "./islands/TaskCheckbox.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
 const manifest = {
@@ -16,11 +17,14 @@ const manifest = {
     "./routes/_middleware.ts": $_middleware,
     "./routes/api/auth/mock.ts": $api_auth_mock,
     "./routes/api/exams/create.ts": $api_exams_create,
+    "./routes/api/tasks/[id]/toggle.ts": $api_tasks_id_toggle,
     "./routes/exams/new.tsx": $exams_new,
     "./routes/index.tsx": $index,
     "./routes/login.tsx": $login,
   },
-  islands: {},
+  islands: {
+    "./islands/TaskCheckbox.tsx": $TaskCheckbox,
+  },
   baseUrl: import.meta.url,
 } satisfies Manifest;
 
