@@ -12,6 +12,9 @@ export default function Home() {
         <p class="my-4">
           合格から逆算する、挫折しない伴走者
         </p>
+        <div class="mt-8">
+            <a href="/exams/new" class="btn btn-primary">Create New Plan</a>
+        </div>
       </div>
     </>
   );

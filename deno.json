@@ -19,7 +19,8 @@
     "@preact/signals-core": "https://esm.sh/*@preact/signals-core@1.5.1",
     "tailwindcss": "npm:tailwindcss@3.4.1",
     "tailwindcss/": "npm:tailwindcss@3.4.1/",
-    "tailwindcss-plugin-daisyui": "npm:daisyui@4.6.0"
+    "tailwindcss-plugin-daisyui": "npm:daisyui@4.6.0",
+    "postgres": "https://deno.land/x/postgres@v0.19.3/mod.ts"
   },
   "compilerOptions": {
     "jsx": "react-jsx",
