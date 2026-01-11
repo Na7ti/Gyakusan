@@ -1,18 +1,18 @@
-import { Client } from "postgres";
+import { Pool } from "postgres";
 
 const DATABASE_URL = Deno.env.get("DATABASE_URL") || "postgres://user:password@localhost:5432/gyakusan";
 
-export const db = new Client(DATABASE_URL);
+// Use a pool for multiple concurrent connections
+const pool = new Pool(DATABASE_URL, 10, true);
 
 /**
- * Connect to the database, run a callback, and disconnect.
- * Useful for one-off queries or initialization checks.
+ * Get a connection from the pool, run a callback, and return the connection.
  */
-export async function withDb<T>(callback: (client: Client) => Promise<T>): Promise<T> {
-  await db.connect();
+export async function withDb<T>(callback: (client: Pool) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
   try {
-    return await callback(db);
+    return await callback(client);
   } finally {
-    await db.end();
+    client.release();
   }
 }

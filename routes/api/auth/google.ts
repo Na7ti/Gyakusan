@@ -1,7 +1,7 @@
 import { Handlers } from "$fresh/server.ts";
 
 export const handler: Handlers = {
-  GET(req) {
+  GET(_req: Request) {
     const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
     const redirectUri = Deno.env.get("REDIRECT_URI");
     

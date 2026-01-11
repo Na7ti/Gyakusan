@@ -24,14 +24,21 @@ export default function DashboardUI({ exam, todayTask, stats }: Props) {
 
   return (
     <div class="space-y-8">
-      <header class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-        <div>
-          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">目標試験</h2>
-          <h1 class="text-2xl font-bold text-gray-900">{exam.title}</h1>
+      <header class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <a href="/" class="text-sm font-bold text-primary flex items-center gap-1 hover:underline">
+            <span>←</span> 一覧に戻る
+          </a>
         </div>
-        <div class="text-right">
-          <p class="text-sm text-gray-500">試験まであと</p>
-          <p class="text-3xl font-black text-primary">{stats.daysLeft}日</p>
+        <div class="flex justify-between items-end">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">目標試験</h2>
+            <h1 class="text-3xl font-black text-gray-900 leading-none">{exam.title}</h1>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-gray-500 font-bold uppercase tracking-widest">試験まで</p>
+            <p class="text-4xl font-black text-primary leading-none">あと{stats.daysLeft}日</p>
+          </div>
         </div>
       </header>
 

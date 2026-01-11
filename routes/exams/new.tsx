@@ -1,5 +1,4 @@
 import { Head } from "$fresh/runtime.ts";
-import { Handlers, PageProps } from "$fresh/server.ts";
 
 export default function NewExam() {
   return (

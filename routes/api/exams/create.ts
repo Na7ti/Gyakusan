@@ -14,9 +14,9 @@ export const handler: Handlers = {
     }
 
     const userId = await withDb(async (client) => {
-        const result = await client.queryObject`SELECT id FROM users WHERE google_id=${authToken}`;
+        const result = await client.queryObject<{ id: number }>`SELECT id FROM users WHERE google_id=${authToken}`;
         if (result.rows.length === 0) throw new Error("User not found");
-        return (result.rows[0] as any).id;
+        return result.rows[0].id;
     });
 
     const calendar = new GoogleCalendarClient(authToken);
@@ -41,11 +41,46 @@ export const handler: Handlers = {
 
     const schedule = generateSchedule(startDate, examDate, targetPages);
 
+    // Prepare all tasks list
+    const tasksToCreate = [];
+    if (regStartStr) tasksToCreate.push({ title: '📝 出願開始日', date: regStartStr, desc: '試験の出願受付が開始されます。' });
+    if (regEndStr) tasksToCreate.push({ title: '⚠️ 出願締切日', date: regEndStr, desc: '試験の出願締切日です。お忘れなく！' });
+    if (paymentDeadlineStr) tasksToCreate.push({ title: '💳 支払期限', date: paymentDeadlineStr, desc: '受験料の支払い期限です。' });
+    tasksToCreate.push({ title: '🎉 試験当日', date: examDateStr, desc: `頑張りましょう！ (${title})` });
+
+    for (const task of schedule) {
+      tasksToCreate.push({
+        title: `Task: ${task.target} items`,
+        date: task.date.toISOString().split('T')[0],
+        desc: `Target quota for today. Cumulative total: ${task.cumulative}`
+      });
+    }
+
+    // 1. Sync to Google Calendar FIRST (Slow network call)
+    // We do this outside the DB transaction to avoid holding the connection.
+    const syncedTasks = [];
+    for (const task of tasksToCreate) {
+      let calendarEventId = null;
+      try {
+        const event = await calendar.createEvent({
+          summary: `${task.title} [Gyakusan]`,
+          description: task.desc,
+          start: { date: task.date },
+          end: { date: task.date },
+        });
+        calendarEventId = event.id;
+      } catch (err) {
+        console.error("Failed to sync task to calendar", err);
+      }
+      syncedTasks.push({ ...task, calendarEventId });
+    }
+
+    // 2. Perform DB ops (Fast)
     await withDb(async (client) => {
       try {
         await client.queryArray("BEGIN");
 
-        const examResult = await client.queryObject`
+        const examResult = await client.queryObject<{ id: number }>`
           INSERT INTO exams (
             user_id, title, exam_date, target_pages, 
             registration_start_date, registration_end_date, payment_deadline
@@ -56,44 +91,12 @@ export const handler: Handlers = {
           )
           RETURNING id
         `;
-        const examId = (examResult.rows[0] as any).id;
+        const examId = examResult.rows[0].id;
 
-        const allTasks = [];
-
-        // Add Important Dates
-        if (regStartStr) allTasks.push({ title: '📝 出願開始日', date: regStartStr, desc: '試験の出願受付が開始されます。' });
-        if (regEndStr) allTasks.push({ title: '⚠️ 出願締切日', date: regEndStr, desc: '試験の出願締切日です。お忘れなく！' });
-        if (paymentDeadlineStr) allTasks.push({ title: '💳 支払期限', date: paymentDeadlineStr, desc: '受験料の支払い期限です。' });
-        allTasks.push({ title: '🎉 試験当日', date: examDateStr, desc: `頑張りましょう！ (${title})` });
-
-        // Add Study Tasks
-        for (const task of schedule) {
-          allTasks.push({
-            title: `Task: ${task.target} items`,
-            date: task.date.toISOString().split('T')[0],
-            desc: `Target quota for today. Cumulative total: ${task.cumulative}`
-          });
-        }
-
-        for (const task of allTasks) {
-          // 1. Sync to Google Calendar
-          let calendarEventId = null;
-          try {
-            const event = await calendar.createEvent({
-              summary: `${task.title} [Gyakusan]`,
-              description: task.desc,
-              start: { date: task.date },
-              end: { date: task.date }, // All day event
-            });
-            calendarEventId = event.id;
-          } catch (err) {
-            console.error("Failed to sync task to calendar", err);
-          }
-
-          // 2. Save to DB
+        for (const task of syncedTasks) {
           await client.queryArray`
             INSERT INTO tasks (exam_id, title, due_date, description, calendar_event_id)
-            VALUES (${examId}, ${task.title}, ${task.date}, ${task.desc}, ${calendarEventId})
+            VALUES (${examId}, ${task.title}, ${task.date}, ${task.desc}, ${task.calendarEventId})
           `;
         }
 
