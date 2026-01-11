@@ -45,13 +45,12 @@ export const handler: Handlers<DashboardData | null, State> = {
 
       const exam = examRes.rows[0];
 
-      // 2. Get today's task
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // 2. Get today's task (Matching only the YYYY-MM-DD part)
+      const todayStr = new Date().toISOString().split('T')[0];
       const todayTaskRes = await client.queryObject<{ id: number; title: string; description: string; is_completed: boolean }>`
         SELECT id, title, description, is_completed 
         FROM tasks 
-        WHERE exam_id = ${exam.id} AND due_date = ${today}
+        WHERE exam_id = ${exam.id} AND due_date::date = ${todayStr}::date
         LIMIT 1
       `;
 

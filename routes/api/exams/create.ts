@@ -48,11 +48,16 @@ export const handler: Handlers = {
     if (paymentDeadlineStr) tasksToCreate.push({ title: '💳 支払期限', date: paymentDeadlineStr, desc: '受験料の支払い期限です。' });
     tasksToCreate.push({ title: '🎉 試験当日', date: examDateStr, desc: `頑張りましょう！ (${title})` });
 
-    for (const task of schedule) {
+    const totalDays = schedule.length;
+    for (let i = 0; i < totalDays; i++) {
+      const task = schedule[i];
+      const dayNum = i + 1;
+      const daysLeft = totalDays - dayNum;
+      
       tasksToCreate.push({
-        title: `Task: ${task.target} items`,
+        title: `📚 勉強: 第${dayNum}日 (残り${daysLeft}日)`,
         date: task.date.toISOString().split('T')[0],
-        desc: `Target quota for today. Cumulative total: ${task.cumulative}`
+        desc: `今日の目標: ${task.target} ページ / 累計: ${task.cumulative} ページ`
       });
     }
 
