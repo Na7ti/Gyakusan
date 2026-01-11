@@ -1,0 +1,7 @@
+.env
+_fresh/
+node_modules/
+dist/
+cov_profile/
+coverage/
+.DS_Store
