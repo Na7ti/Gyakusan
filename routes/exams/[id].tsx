@@ -64,6 +64,9 @@ export const handler: Handlers<DashboardData | null, State> = {
       `;
       const statsData = statsRes.rows[0];
 
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       const examDate = new Date(exam.exam_date);
       const diffTime = examDate.getTime() - today.getTime();
       const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
