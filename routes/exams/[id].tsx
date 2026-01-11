@@ -95,7 +95,7 @@ export default function ExamDashboard({ data }: PageProps<DashboardData | null>)
           <div class="max-w-screen-lg mx-auto px-4 h-16 flex items-center justify-between">
             <h1 class="text-xl font-black text-primary tracking-tighter">GYAKUSAN</h1>
             <div class="flex items-center gap-4">
-               <a href="/" class="text-sm font-bold text-gray-500 hover:text-primary transition-colors">一覧に戻る</a>
+               <span class="text-sm text-gray-500 font-medium italic">Empowered Learning</span>
             </div>
           </div>
         </nav>

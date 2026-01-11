@@ -49,15 +49,19 @@ export default function DashboardUI({ exam, todayTask, stats }: Props) {
               <span class="text-2xl">🔥</span> 今日のノルマ
             </h2>
             {todayTask ? (
-              <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                <TaskCheckbox taskId={todayTask.id} initialCompleted={todayTask.is_completed} />
-                <div>
-                  <h3 class="font-bold text-lg">{todayTask.title}</h3>
-                  <p class="text-gray-600">{todayTask.description}</p>
+              <div class="quota-card flex items-center gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                <div class="flex-shrink-0">
+                  <TaskCheckbox taskId={todayTask.id} initialCompleted={todayTask.is_completed} />
+                </div>
+                <div class="flex-grow">
+                  <h3 class="font-black text-xl text-gray-900 mb-1">{todayTask.title}</h3>
+                  <p class="text-gray-500 text-sm leading-relaxed">{todayTask.description}</p>
                 </div>
               </div>
             ) : (
-              <p class="text-gray-500 italic">今日のタスクはありません。しっかり休みましょう！</p>
+              <div class="p-8 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                <p class="text-gray-400 font-medium italic">今日のタスクはありません。しっかり休みましょう！</p>
+              </div>
             )}
           </div>
         </div>
