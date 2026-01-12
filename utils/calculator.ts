@@ -15,15 +15,15 @@ export interface DailyTask {
  * @returns An array of DailyTask objects
  */
 export function generateSchedule(startDate: Date, examDate: Date, totalTarget: number): DailyTask[] {
-    // Normalize dates to start of day
+    // Normalize dates to start of day (UTC)
     const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
+    start.setUTCHours(0, 0, 0, 0);
     const end = new Date(examDate);
-    end.setHours(0, 0, 0, 0);
+    end.setUTCHours(0, 0, 0, 0);
 
     // Calculate total days (inclusive of start date, exclusive of exam date)
     const diffTime = end.getTime() - start.getTime();
-    const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const totalDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
     if (totalDays <= 0) {
         throw new Error("Exam date must be in the future relative to start date.");

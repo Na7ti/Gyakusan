@@ -11,3 +11,11 @@ body {
 .bg-primary { background-color: #570df8; }
 .border-primary { border-color: #570df8; }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

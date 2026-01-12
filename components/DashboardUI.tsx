@@ -1,10 +1,18 @@
 import TaskCheckbox from "../islands/TaskCheckbox.tsx";
+import RoadmapSection from "../islands/RoadmapSection.tsx";
+import DeleteExamButton from "../islands/DeleteExamButton.tsx";
 
 interface Props {
   exam: {
+    id: number;
     title: string;
     exam_date: Date;
     target_pages: number;
+    start_date?: Date | null;
+    registration_start_date?: Date;
+    registration_end_date?: Date;
+    payment_deadline?: Date;
+    roadmap: string | null;
   };
   todayTask?: {
     id: number;
@@ -24,7 +32,10 @@ export default function DashboardUI({ exam, todayTask, stats }: Props) {
 
   return (
     <div class="space-y-8">
-      <header class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+      <header class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6 relative">
+        <div class="absolute top-6 right-6 z-50">
+            <DeleteExamButton examId={exam.id} examTitle={exam.title} />
+        </div>
         <div class="flex justify-between items-center mb-4">
           <a href="/" class="text-sm font-bold text-primary flex items-center gap-1 hover:underline">
             <span>←</span> 一覧に戻る
@@ -76,8 +87,11 @@ export default function DashboardUI({ exam, todayTask, stats }: Props) {
         </div>
       </section>
 
+      <RoadmapSection examId={exam.id} initialRoadmap={exam.roadmap} />
+
       <div class="flex justify-center pt-4">
-        <a href="/exams/new" class="btn btn-ghost btn-sm text-gray-400 hover:text-primary transition-colors">
+        <a href={`/exams/new?replace_id=${exam.id}&title=${encodeURIComponent(exam.title)}&exam_date=${new Date(exam.exam_date).toISOString().split('T')[0]}&target_pages=${exam.target_pages}${exam.start_date ? `&start_date=${new Date(exam.start_date).toISOString().split('T')[0]}` : ''}${exam.registration_start_date ? `&registration_start_date=${new Date(exam.registration_start_date).toISOString().split('T')[0]}` : ''}${exam.registration_end_date ? `&registration_end_date=${new Date(exam.registration_end_date).toISOString().split('T')[0]}` : ''}${exam.payment_deadline ? `&payment_deadline=${new Date(exam.payment_deadline).toISOString().split('T')[0]}` : ''}`} 
+           class="btn btn-ghost btn-sm text-gray-400 hover:text-primary transition-colors">
           試験プランを再作成する
         </a>
       </div>

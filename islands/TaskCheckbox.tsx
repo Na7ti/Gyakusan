@@ -21,6 +21,8 @@ export default function TaskCheckbox({ taskId, initialCompleted }: TaskCheckboxP
       
       if (resp.ok) {
         isCompleted.value = !isCompleted.value;
+        // Reload page to update progress stats in real-time
+        window.location.reload();
       }
     } catch (err) {
       console.error("Failed to toggle task", err);
