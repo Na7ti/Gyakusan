@@ -84,4 +84,18 @@ export class GoogleCalendarClient {
 
     return await resp.json();
   }
+
+  async deleteEvent(eventId: string) {
+    const resp = await this.fetchWithAuth(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    if (!resp.ok && resp.status !== 404) {
+      const error = await resp.text();
+      throw new Error(`Failed to delete event: ${error}`);
+    }
+  }
 }

@@ -22,9 +22,11 @@ export const handler: Handlers = {
     const calendar = new GoogleCalendarClient(authToken);
 
     const form = await req.formData();
+    const replaceIdStr = form.get("replace_id") as string;
     const title = form.get("title") as string;
     const examDateStr = form.get("exam_date") as string;
     const targetPagesStr = form.get("target_pages") as string;
+    const startDateStr = form.get("start_date") as string;
     
     const regStartStr = form.get("registration_start_date") as string;
     const regEndStr = form.get("registration_end_date") as string;
@@ -34,10 +36,55 @@ export const handler: Handlers = {
       return new Response("Missing fields", { status: 400 });
     }
 
+    // If replace_id is provided, delete the existing exam first
+    if (replaceIdStr) {
+      const replaceId = parseInt(replaceIdStr);
+      await withDb(async (client) => {
+        // Get calendar event IDs before deletion
+        const eventsRes = await client.queryObject<{ calendar_event_id: string }>`
+          SELECT calendar_event_id FROM tasks 
+          WHERE exam_id = ${replaceId} AND calendar_event_id IS NOT NULL
+        `;
+        
+        // Delete events from Google Calendar
+        for (const row of eventsRes.rows) {
+          if (row.calendar_event_id) {
+            try {
+              await calendar.deleteEvent(row.calendar_event_id);
+            } catch (e) {
+              console.error("Failed to delete calendar event:", e);
+            }
+          }
+        }
+
+        // Delete tasks and exam from database
+        await client.queryArray`DELETE FROM tasks WHERE exam_id = ${replaceId}`;
+        await client.queryArray`DELETE FROM exams WHERE id = ${replaceId} AND user_id = ${userId}`;
+      });
+    }
+
+    // Use JST for "today" calculation
+    const getJstNow = () => {
+      const now = new Date();
+      const jstOffset = 9 * 60; // JST is UTC+9
+      return new Date(now.getTime() + jstOffset * 60 * 1000);
+    };
+
+    // Use provided start date or default to today (in JST)
+    let startDate: Date;
+    if (startDateStr) {
+      // startDateStr is "YYYY-MM-DD", specifying the day in JST
+      startDate = new Date(startDateStr);
+    } else {
+      startDate = getJstNow();
+    }
+    // Set to 00:00 UTC for consistent calculation in generateSchedule
+    startDate.setUTCHours(0, 0, 0, 0);
+
     const examDate = new Date(examDateStr);
+    examDate.setUTCHours(0, 0, 0, 0); // Normalize to UTC
+    
     const targetPages = parseInt(targetPagesStr);
-    const startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
 
     const schedule = generateSchedule(startDate, examDate, targetPages);
 
@@ -54,9 +101,12 @@ export const handler: Handlers = {
       const dayNum = i + 1;
       const daysLeft = totalDays - dayNum;
       
+      // task.date is a Date object. Convert it to "YYYY-MM-DD" string consistently.
+      const dateStr = task.date.toISOString().split('T')[0];
+      
       tasksToCreate.push({
         title: `📚 勉強: 第${dayNum}日 (残り${daysLeft}日)`,
-        date: task.date.toISOString().split('T')[0],
+        date: dateStr,
         desc: `今日の目標: ${task.target} ページ / 累計: ${task.cumulative} ページ`
       });
     }
@@ -68,7 +118,7 @@ export const handler: Handlers = {
       let calendarEventId = null;
       try {
         const event = await calendar.createEvent({
-          summary: `${task.title} [Gyakusan]`,
+          summary: `[${title}] ${task.title}`,
           description: task.desc,
           start: { date: task.date },
           end: { date: task.date },
