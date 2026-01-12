@@ -10,6 +10,10 @@ interface DashboardData {
     title: string;
     exam_date: Date;
     target_pages: number;
+    registration_start_date?: Date;
+    registration_end_date?: Date;
+    payment_deadline?: Date;
+    roadmap: string | null;
   };
   todayTask?: {
     id: number;
@@ -33,8 +37,12 @@ export const handler: Handlers<DashboardData | null, State> = {
 
     return await withDb(async (client) => {
       // 1. Get the specific exam
-      const examRes = await client.queryObject<{ id: number; title: string; exam_date: Date; target_pages: number }>`
-        SELECT id, title, exam_date, target_pages 
+      const examRes = await client.queryObject<{ 
+        id: number; title: string; exam_date: Date; target_pages: number;
+        registration_start_date?: Date; registration_end_date?: Date; payment_deadline?: Date;
+        roadmap: string | null;
+      }>`
+        SELECT id, title, exam_date, target_pages, registration_start_date, registration_end_date, payment_deadline, roadmap
         FROM exams 
         WHERE id = ${examId} AND user_id = (SELECT id FROM users WHERE google_id = ${user.id})
       `;
@@ -45,8 +53,12 @@ export const handler: Handlers<DashboardData | null, State> = {
 
       const exam = examRes.rows[0];
 
-      // 2. Get today's task (Matching only the YYYY-MM-DD part)
-      const todayStr = new Date().toISOString().split('T')[0];
+      // 2. Get today's task (Convert UTC to JST for correct date matching)
+      const now = new Date();
+      const jstOffset = 9 * 60; // JST is UTC+9
+      const jstTime = new Date(now.getTime() + jstOffset * 60 * 1000);
+      const todayStr = jstTime.toISOString().split('T')[0];
+      
       const todayTaskRes = await client.queryObject<{ id: number; title: string; description: string; is_completed: boolean }>`
         SELECT id, title, description, is_completed 
         FROM tasks 
@@ -64,6 +76,12 @@ export const handler: Handlers<DashboardData | null, State> = {
       `;
       const statsData = statsRes.rows[0];
 
+      // 4. Get the earliest task date as start_date
+      const startDateRes = await client.queryObject<{ due_date: Date }>`
+        SELECT due_date FROM tasks WHERE exam_id = ${exam.id}
+        ORDER BY due_date ASC LIMIT 1
+      `;
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -72,7 +90,10 @@ export const handler: Handlers<DashboardData | null, State> = {
       const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       return ctx.render({
-        exam,
+        exam: {
+          ...exam,
+          start_date: startDateRes.rows[0]?.due_date || null,
+        },
         todayTask: todayTaskRes.rows[0],
         stats: {
           completed: Number(statsData.completed),
