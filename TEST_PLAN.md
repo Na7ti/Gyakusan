@@ -39,6 +39,15 @@
     - 手順: 試験一覧ページにアクセスする。
     - 期待値: 作成した試験が表示されていること。
 
+## 6. 自動化テスト (Automation)
+- [ ] **Integration Script Execution**
+    - 実行コマンド: `deno run -A scripts/verify_integration.ts`
+    - カバレッジ: 
+        - [x] TC-003: 新規試験作成
+        - [x] TC-005: ロードマップ自動生成 (APIレベル検証)
+        - [x] TC-008: 試験削除
+    - 期待値: "🎉 All Verification Tests Passed!" が表示されること。
+
 ## 5. 削除機能 (Deletion)
 - [ ] **TC-008: 試験削除**
     - 手順: 
