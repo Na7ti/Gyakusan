@@ -10,6 +10,7 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - REDIRECT_URI=${REDIRECT_URI:-http://localhost:8000/api/auth/callback}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - db
     command: task start

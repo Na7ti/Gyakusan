@@ -7,12 +7,18 @@ import * as $_middleware from "./routes/_middleware.ts";
 import * as $api_auth_callback from "./routes/api/auth/callback.ts";
 import * as $api_auth_google from "./routes/api/auth/google.ts";
 import * as $api_exams_id_delete from "./routes/api/exams/[id]/delete.ts";
+import * as $api_exams_id_roadmap from "./routes/api/exams/[id]/roadmap.ts";
 import * as $api_exams_create from "./routes/api/exams/create.ts";
+import * as $api_gmail_scan from "./routes/api/gmail/scan.ts";
 import * as $api_tasks_id_toggle from "./routes/api/tasks/[id]/toggle.ts";
 import * as $exams_id_ from "./routes/exams/[id].tsx";
 import * as $exams_new from "./routes/exams/new.tsx";
 import * as $index from "./routes/index.tsx";
 import * as $login from "./routes/login.tsx";
+import * as $CreateExamForm from "./islands/CreateExamForm.tsx";
+import * as $DeleteExamButton from "./islands/DeleteExamButton.tsx";
+import * as $GmailImportButton from "./islands/GmailImportButton.tsx";
+import * as $RoadmapSection from "./islands/RoadmapSection.tsx";
 import * as $TaskCheckbox from "./islands/TaskCheckbox.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
@@ -23,7 +29,9 @@ const manifest = {
     "./routes/api/auth/callback.ts": $api_auth_callback,
     "./routes/api/auth/google.ts": $api_auth_google,
     "./routes/api/exams/[id]/delete.ts": $api_exams_id_delete,
+    "./routes/api/exams/[id]/roadmap.ts": $api_exams_id_roadmap,
     "./routes/api/exams/create.ts": $api_exams_create,
+    "./routes/api/gmail/scan.ts": $api_gmail_scan,
     "./routes/api/tasks/[id]/toggle.ts": $api_tasks_id_toggle,
     "./routes/exams/[id].tsx": $exams_id_,
     "./routes/exams/new.tsx": $exams_new,
@@ -31,6 +39,10 @@ const manifest = {
     "./routes/login.tsx": $login,
   },
   islands: {
+    "./islands/CreateExamForm.tsx": $CreateExamForm,
+    "./islands/DeleteExamButton.tsx": $DeleteExamButton,
+    "./islands/GmailImportButton.tsx": $GmailImportButton,
+    "./islands/RoadmapSection.tsx": $RoadmapSection,
     "./islands/TaskCheckbox.tsx": $TaskCheckbox,
   },
   baseUrl: import.meta.url,
