@@ -40,13 +40,14 @@
     - 期待値: 作成した試験が表示されていること。
 
 ## 6. 自動化テスト (Automation)
-- [ ] **Integration Script Execution**
+- [ ] **Integration Script Execution (Bash)**
+    - 実行コマンド: `bash scripts/verify_curl.sh` (Docker環境が必要)
+    - カバレッジ: 全主要機能 (Create, AI, Delete)
+    - 期待値: "🎉 TEST PASSED SUCCESSFULLY!"
+
+- [ ] **Integration Script Execution (Deno)**
     - 実行コマンド: `deno run -A scripts/verify_integration.ts`
-    - カバレッジ: 
-        - [x] TC-003: 新規試験作成
-        - [x] TC-005: ロードマップ自動生成 (APIレベル検証)
-        - [x] TC-008: 試験削除
-    - 期待値: "🎉 All Verification Tests Passed!" が表示されること。
+
 
 ## 5. 削除機能 (Deletion)
 - [ ] **TC-008: 試験削除**
