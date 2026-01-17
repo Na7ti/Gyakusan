@@ -13,6 +13,7 @@ export const handler: Handlers = {
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/userinfo.profile",
       "https://www.googleapis.com/auth/calendar.events",
+      "https://www.googleapis.com/auth/gmail.readonly",
     ].join(" ");
 
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
